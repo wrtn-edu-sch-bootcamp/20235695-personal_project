@@ -1,0 +1,99 @@
+{
+  "name": "재고 불일치 즉시 알림",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "inventory-webhook",
+        "options": {}
+      },
+      "name": "Webhook 수신",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "inventory-mismatch",
+      "id": "webhook-trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "value2": "mismatched"
+            }
+          ]
+        }
+      },
+      "name": "불일치만 필터",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [470, 300],
+      "id": "filter-mismatched"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst diff = item.actual_quantity - item.expected_quantity;\nconst emoji = diff > 0 ? '📈' : '📉';\n\nconst message = `${emoji} **재고 불일치 발견!**\\n\\n` +\n  `상품: ${item.product_name}\\n` +\n  `바코드: ${item.barcode}\\n` +\n  `재고서: ${item.expected_quantity}개\\n` +\n  `실물: ${item.actual_quantity}개\\n` +\n  `차이: ${diff > 0 ? '+' : ''}${diff}개\\n\\n` +\n  `세션: ${item.session_name}`;\n\nreturn { message };"
+      },
+      "name": "알림 메시지 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [690, 300],
+      "id": "format-alert"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C12345678",
+          "mode": "list",
+          "cachedResultName": "#재고-알림"
+        },
+        "text": "={{ $json.message }}",
+        "otherOptions": {}
+      },
+      "name": "Slack 알림 전송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [910, 300],
+      "id": "slack-alert"
+    }
+  ],
+  "connections": {
+    "Webhook 수신": {
+      "main": [
+        [
+          {
+            "node": "불일치만 필터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "불일치만 필터": {
+      "main": [
+        [
+          {
+            "node": "알림 메시지 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "알림 메시지 생성": {
+      "main": [
+        [
+          {
+            "node": "Slack 알림 전송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

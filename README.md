@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 편의점 재고 확인 시스템
 
-## Getting Started
+## 프로젝트 개요
+편의점 알바생과 매니저를 위한 **재고 자동 대조 시스템**입니다.
+종이 재고서를 하나씩 눈으로 확인하는 기존 방식 대신, 바코드 스캔과 자동 매칭으로 재고 확인 시간을 대폭 줄여줍니다.
 
-First, run the development server:
+## 목적
+- 알바생/매니저의 **재고 확인 시간 절약** → 다른 업무에 집중 가능
+- 고객의 **대기 시간 감소**
+- 수작업으로 인한 **실수 방지**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 현재 문제점
+- 종이 재고서를 눈으로 보면서 물품을 하나씩 대조해야 함
+- 시간이 오래 걸리고 실수가 발생하기 쉬움
+- 재고 확인 중 다른 업무를 할 수 없음
+
+## 해결 방법
+
+### 1단계: 재고서 디지털화
+- 종이 재고서를 카메라로 촬영하거나 파일(엑셀/CSV)로 업로드
+- OCR로 텍스트 자동 추출 → DB에 저장
+- 상품명, 바코드, 수량이 디지털 목록으로 변환됨
+
+### 2단계: 바코드 스캔 및 자동 대조
+- 스마트폰 카메라로 상품 바코드를 스캔
+- 바코드 번호로 DB를 자동 조회하여 해당 상품을 매칭 (순서 무관)
+- 실물 수량을 직접 입력
+- 재고서 수량 vs 실물 수량을 자동 비교
+  - ✅ 일치 → 확인 완료
+  - ⚠️ 불일치 → 경고 및 차이 표시
+
+## 주요 기능
+- **재고서 업로드**: 사진 촬영(OCR) 또는 엑셀/CSV 파일 업로드
+- **바코드 스캔**: 스마트폰 카메라로 상품 바코드 인식 (순서 상관없음)
+- **수량 입력**: 바코드 스캔 후 실물 수량 직접 입력
+- **자동 대조**: 재고서 수량과 실물 수량 자동 비교
+- **진행률 대시보드**: 전체 품목 중 확인 완료 비율 실시간 표시
+- **불일치 알림**: 수량이 맞지 않는 품목 즉시 표시
+- **AI 챗봇 (InvenBot)**: 자연어로 재고 현황 질문 (LLM + Prompt Engineering)
+- **Slack 연동**: `/재고` 명령어로 Slack에서 재고 조회
+- **학습 복습 모드**: 알바 중 손님 없을 때 과목별 복습 (30분 간격 알림)
+
+## 기술 스택
+| 영역 | 기술 | 비용 |
+|------|------|------|
+| 프론트엔드 | Next.js 14 (App Router) + PWA | 무료 |
+| UI | Tailwind CSS + shadcn/ui | 무료 |
+| 바코드 스캔 | html5-qrcode | 무료 (오픈소스) |
+| OCR | Tesseract.js | 무료 (오픈소스) |
+| LLM / AI | Google Gemini 2.0 Flash + Prompt Engineering | 무료 |
+| 메신저 연동 | Slack API (Slash Command) | 무료 |
+| 백엔드/DB | Supabase (PostgreSQL + Auth) | 무료 티어 |
+| 호스팅 | Vercel | 무료 티어 |
+
+## 워크플로우
+```
+재고서 업로드 (사진 or 파일)
+        ↓
+OCR/파싱 → DB 저장 (바코드, 상품명, 재고서 수량)
+        ↓
+매장에서 상품 바코드 스캔 (순서 상관없음)
+        ↓
+바코드로 DB 조회 → 해당 상품 자동 매칭
+        ↓
+실물 수량 입력
+        ↓
+자동 대조 (재고서 수량 vs 실물 수량)
+        ↓
+대시보드에서 전체 진행률 확인
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 설치 및 실행
+```bash
+# 의존성 설치
+npm install
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 개발 서버 실행
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 브라우저에서 접속
+# http://localhost:3000
+```
 
-## Learn More
+## 환경 변수
+`.env.local` 파일을 생성하고 다음 값을 설정하세요:
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+GEMINI_API_KEY=your_gemini_api_key
+SLACK_BOT_TOKEN=your_slack_bot_token
+SLACK_SIGNING_SECRET=your_slack_signing_secret
+```
 
-To learn more about Next.js, take a look at the following resources:
+## AI 챗봇 (Prompt Engineering)
+웹 화면 우측 하단의 채팅 아이콘을 클릭하면 InvenBot과 대화할 수 있습니다.
+- "콜라 몇 개 있어?" → 상품명으로 재고 검색
+- "불일치 목록 알려줘" → 수량이 맞지 않는 품목 조회
+- "오늘 재고 결과 요약해줘" → 전체 현황 요약
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Slack 연동
+Slack에서 `/재고` 명령어로 동일한 질문이 가능합니다.
+- `/재고 라면 재고 알려줘`
+- `/재고 불일치 상품 뭐야?`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## n8n 자동화 워크플로우
 
-## Deploy on Vercel
+n8n을 사용하면 코드 없이 자동화 워크플로우를 구축할 수 있습니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 제공되는 워크플로우
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **일일 재고 리포트** (`n8n-workflows/daily-inventory-report.json`)
+   - 매일 오후 6시 자동 실행
+   - `/api/reports` API로 재고 현황 조회
+   - Slack 채널에 요약 리포트 전송
+   - 불일치 품목 상세 내역 포함
+
+2. **불일치 즉시 알림** (`n8n-workflows/mismatch-alert.json`)
+   - 재고 확인 시 불일치 발생하면 즉시 Webhook 수신
+   - Slack 채널에 실시간 알림 전송
+   - 차이(+/-)와 상품 정보 포함
+
+### n8n 설정 방법
+
+1. n8n 설치 (https://n8n.io) 또는 클라우드 버전 사용
+2. n8n에서 **Import from File** 클릭
+3. `n8n-workflows/*.json` 파일 임포트
+4. Slack 노드에서 OAuth 인증 설정
+5. 워크플로우 활성화
+
+### 환경 변수 추가 (선택)
+
+불일치 즉시 알림을 사용하려면 `.env.local`에 추가:
+```
+NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
+```
+
+## 학습 복습 모드
+
+알바생이 손님 없는 시간에 공부할 수 있는 기능입니다.
+
+### 사용 방법
+1. 하단 네비게이션에서 "공부" 탭 클릭
+2. "과목 관리"에서 이번 학기 과목 등록 (예: 운영체제, 데이터베이스)
+3. 복습할 과목 선택 → 복습 모드 시작
+4. AI가 생성한 복습 내용 확인
+5. "확인 완료" 버튼 클릭 → 30분 후 다음 알림 수신
+6. 손님이 오면 복습 모드 종료
+
+### 특징
+- LLM이 과목별 핵심 개념을 간결하게 생성
+- 30분 간격 자동 알림 (사용자가 확인 완료 후)
+- 실생활 예시와 질문 포함
+- 알바 중 자투리 시간 활용
+
+## API 엔드포인트
+
+| 경로 | 설명 |
+|------|------|
+| `/api/chat` | LLM 챗봇 API (웹 채팅) |
+| `/api/slack/command` | Slack Slash Command 처리 |
+| `/api/reports?days=1` | 재고 리포트 조회 (n8n용) |
+| `/api/study/reminder` | 복습 내용 생성 (LLM) |
+
+## 라이선스
+MIT

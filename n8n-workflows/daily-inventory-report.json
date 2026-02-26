@@ -1,0 +1,100 @@
+{
+  "name": "편의점 재고 일일 리포트",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      },
+      "name": "매일 오후 6시 실행",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://your-app.vercel.app/api/reports?days=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "재고 리포트 API 호출",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300],
+      "id": "http-request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nconst summary = data.summary;\nconst mismatched = data.mismatchedItems;\n\nlet message = `📊 **오늘의 재고 확인 결과**\\n\\n`;\nmessage += `✅ 확인 완료: ${summary.checkedItems}/${summary.totalItems}개 (${summary.completionRate}%)\\n`;\nmessage += `✓ 일치: ${summary.matchedItems}개\\n`;\nmessage += `⚠️ 불일치: ${summary.mismatchedItems}개\\n`;\nmessage += `⏳ 미확인: ${summary.pendingItems}개\\n\\n`;\n\nif (mismatched.length > 0) {\n  message += `**불일치 품목:**\\n`;\n  mismatched.forEach(item => {\n    message += `- ${item.productName}: 재고서 ${item.expected}개 → 실물 ${item.actual}개 (${item.difference > 0 ? '+' : ''}${item.difference})\\n`;\n  });\n} else {\n  message += `모든 품목이 일치합니다! 👍`;\n}\n\nreturn { message };"
+      },
+      "name": "리포트 메시지 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [690, 300],
+      "id": "format-message"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C12345678",
+          "mode": "list",
+          "cachedResultName": "#재고-알림"
+        },
+        "text": "={{ $json.message }}",
+        "otherOptions": {}
+      },
+      "name": "Slack 채널에 전송",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [910, 300],
+      "id": "slack-send"
+    }
+  ],
+  "connections": {
+    "매일 오후 6시 실행": {
+      "main": [
+        [
+          {
+            "node": "재고 리포트 API 호출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "재고 리포트 API 호출": {
+      "main": [
+        [
+          {
+            "node": "리포트 메시지 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "리포트 메시지 생성": {
+      "main": [
+        [
+          {
+            "node": "Slack 채널에 전송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
