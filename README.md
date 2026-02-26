@@ -164,5 +164,3 @@ NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
 
 ## 라이선스
 MIT
-
-s
