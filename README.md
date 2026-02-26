@@ -162,7 +162,11 @@ NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
 | `/api/reports?days=1` | 재고 리포트 조회 (n8n용) |
 | `/api/study/reminder` | 복습 내용 생성 (LLM) |
 
+## 배포
+
+- **Vercel**: [items-managment.vercel.app](https://items-managment.vercel.app)
+- **GitHub (개인)**: [ingear1999/items-managment](https://github.com/ingear1999/items-managment)
+- **GitHub (학교)**: [wrtn-edu-sch-bootcamp/20235695-personal_project](https://github.com/wrtn-edu-sch-bootcamp/20235695-personal_project)
+
 ## 라이선스
 MIT
-
-s
