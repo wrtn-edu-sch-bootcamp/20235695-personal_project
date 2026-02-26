@@ -5,9 +5,10 @@ export const dynamic = "force-dynamic";
 import { InventoryItem, InventorySession } from "@/types/database";
 
 function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
-  return createClient(url, key);
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 }
 
 interface ReportData {
