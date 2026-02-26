@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { SessionCard } from "@/components/inventory/session-card";
 import { createClient } from "@/lib/supabase/server";
 import { InventorySession } from "@/types/database";
-import { BRAND_AUTHORIZED_TEXT } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +21,7 @@ export default async function HomePage() {
         <div>
           <h1 className="text-xl font-bold">재고 확인</h1>
           <p className="text-sm text-muted-foreground">
-            편의점 재고 대조 시스템 · {BRAND_AUTHORIZED_TEXT}
+            편의점 재고 대조 시스템
           </p>
         </div>
         <Link href="/upload">
