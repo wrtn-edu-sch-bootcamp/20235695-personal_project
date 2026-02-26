@@ -5,10 +5,14 @@ export const dynamic = "force-dynamic";
 import { InventoryItem, InventorySession } from "@/types/database";
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error("Supabase URL/Key 환경변수가 설정되지 않았습니다.");
+  }
+
+  return createClient(url, key);
 }
 
 interface ReportData {
