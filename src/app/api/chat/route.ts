@@ -32,8 +32,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요." },
+      { error: "답변 생성에 실패했습니다. 잠시 후 다시 시도해주세요.", detail: errMsg },
       { status: 500 }
     );
   }
