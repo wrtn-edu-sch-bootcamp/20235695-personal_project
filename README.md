@@ -47,7 +47,7 @@
 | UI | Tailwind CSS + shadcn/ui | 무료 |
 | 바코드 스캔 | html5-qrcode | 무료 (오픈소스) |
 | OCR | Tesseract.js | 무료 (오픈소스) |
-| LLM / AI | Google Gemini 2.0 Flash + Prompt Engineering | 무료 |
+| LLM / AI | OpenAI GPT API + Prompt Engineering | 사용량 기반 |
 | 메신저 연동 | Slack API (Slash Command) | 무료 |
 | 백엔드/DB | Supabase (PostgreSQL + Auth) | 무료 티어 |
 | 호스팅 | Vercel | 무료 티어 |
@@ -86,7 +86,8 @@ npm run dev
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-GEMINI_API_KEY=your_gemini_api_key
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
 SLACK_BOT_TOKEN=your_slack_bot_token
 SLACK_SIGNING_SECRET=your_slack_signing_secret
 ```

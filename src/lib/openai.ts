@@ -1,6 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import OpenAI from "openai";
 
 export const SYSTEM_PROMPT = `너는 편의점 재고 관리 도우미 "InvenBot"이야.
 사용자가 재고에 대해 질문하면 제공된 재고 데이터를 기반으로 정확하게 답변해.
@@ -27,18 +25,26 @@ export async function chatWithInventory(
   userMessage: string,
   inventoryContext: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: SYSTEM_PROMPT,
-  });
-
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is required.");
+  }
+  const client = new OpenAI({ apiKey });
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const prompt = `현재 재고 데이터:\n${inventoryContext}\n\n질문: ${userMessage}`;
 
   // 최대 3회 재시도 (429 에러 시)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const result = await model.generateContent(prompt);
-      return result.response.text() || "답변을 생성할 수 없습니다.";
+      const result = await client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+      });
+      return result.choices[0]?.message?.content || "답변을 생성할 수 없습니다.";
     } catch (error: unknown) {
       const status =
         error instanceof Error && "status" in error

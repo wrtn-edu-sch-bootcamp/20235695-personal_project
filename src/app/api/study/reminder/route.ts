@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const STUDY_SYSTEM_PROMPT = `당신은 학생들의 복습을 돕는 AI 튜터입니다.
 
@@ -28,6 +26,16 @@ async function sleep(ms: number) {
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "OPENAI_API_KEY가 설정되지 않았습니다." },
+        { status: 500 }
+      );
+    }
+    const client = new OpenAI({ apiKey });
+    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
     const { subjectName } = await req.json();
 
     if (!subjectName) {
@@ -37,20 +45,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: STUDY_SYSTEM_PROMPT,
-    });
-
     let content = "";
     let retries = 3;
 
     while (retries > 0) {
       try {
-        const result = await model.generateContent(
-          `"${subjectName}" 과목에 대한 복습 내용을 생성해주세요.`
-        );
-        content = result.response.text();
+        const result = await client.chat.completions.create({
+          model,
+          messages: [
+            { role: "system", content: STUDY_SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: `"${subjectName}" 과목에 대한 복습 내용을 생성해주세요.`,
+            },
+          ],
+          temperature: 0.7,
+        });
+        content = result.choices[0]?.message?.content || "";
         break;
       } catch (err) {
         const error = err as Error;
