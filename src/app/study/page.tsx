@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { StudentSubject, StudySession, StudyReminder } from "@/types/study";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Clock, CheckCircle2, Pause, Play } from "lucide-react";
+import { BookOpen, Clock, CheckCircle2, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
@@ -23,6 +23,7 @@ export default function StudyPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function StudyPage() {
     }, 1000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSession, generating, currentReminder]);
 
   async function loadData() {
@@ -126,7 +128,7 @@ export default function StudyPage() {
 
       if (!res.ok) throw new Error("복습 내용 생성 실패");
 
-      const { content } = await res.json();
+      await res.json();
 
       const { data: newReminder } = await supabase
         .from("study_reminders")
@@ -141,10 +143,11 @@ export default function StudyPage() {
 
       await loadData();
       toast({ title: "새 복습 내용", description: "확인해주세요!" });
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "오류",
-        description: err.message,
+        description: error.message,
         variant: "destructive",
       });
     } finally {

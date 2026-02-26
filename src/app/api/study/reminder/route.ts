@@ -52,8 +52,9 @@ export async function POST(req: NextRequest) {
         );
         content = result.response.text();
         break;
-      } catch (err: any) {
-        if (err.message?.includes("429") && retries > 1) {
+      } catch (err) {
+        const error = err as Error;
+        if (error.message?.includes("429") && retries > 1) {
           await sleep(10000);
           retries--;
         } else {
@@ -92,10 +93,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ content });
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error("Study reminder error:", error);
     return NextResponse.json(
-      { error: error.message || "복습 내용 생성 실패" },
+      { error: err.message || "복습 내용 생성 실패" },
       { status: 500 }
     );
   }
