@@ -304,18 +304,29 @@ export default function StudyPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  const activeSubject = activeSession
+    ? subjects.find((subject) => subject.id === activeSession.subject_id)
+    : null;
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">로딩 중...</p>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50/40 via-background to-background">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center p-6">
+          <Card className="w-full border-dashed">
+            <CardContent className="py-14 text-center">
+              <p className="text-base text-muted-foreground">학습 모드를 불러오는 중...</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (subjects.length === 0) {
     return (
-      <div className="container mx-auto p-4 pb-24 max-w-2xl">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50/40 via-background to-background">
+        <div className="container mx-auto max-w-3xl p-4 pb-24">
+          <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">과목을 먼저 등록하세요</h2>
@@ -323,154 +334,183 @@ export default function StudyPage() {
               복습할 과목을 추가해야 학습 모드를 시작할 수 있습니다
             </p>
             <Link href="/study/subjects">
-              <Button>과목 관리로 이동</Button>
+              <Button className="px-8">과목 관리로 이동</Button>
             </Link>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 pb-24 max-w-2xl">
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">📖 학습 복습 모드</h1>
-        <div className="flex gap-2">
-          <Link href="/study/subjects">
-            <Button variant="outline" size="sm">
-              과목 관리
-            </Button>
-          </Link>
-          {activeSession && (
-            <Button variant="secondary" size="sm" onClick={toggleFullscreen}>
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="mr-2 h-4 w-4" />
-                  전체화면 종료
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="mr-2 h-4 w-4" />
-                  전체화면
-                </>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50/40 via-background to-background">
+      <div className="container mx-auto max-w-3xl p-4 pb-24">
+        <div className="mb-6 rounded-2xl border bg-card/90 p-5 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">📖 학습 복습 모드</h1>
+            <div className="flex gap-2">
+              <Link href="/study/subjects">
+                <Button variant="outline" size="sm">
+                  과목 관리
+                </Button>
+              </Link>
+              {activeSession && (
+                <Button variant="secondary" size="sm" onClick={toggleFullscreen}>
+                  {isFullscreen ? (
+                    <>
+                      <Minimize2 className="mr-2 h-4 w-4" />
+                      전체화면 종료
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="mr-2 h-4 w-4" />
+                      전체화면
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
-          )}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {activeSession
+              ? "집중 모드가 활성화되었습니다. 알림이 오면 확인 완료를 눌러주세요."
+              : "과목을 선택하면 30분 간격으로 핵심 복습 알림이 제공됩니다."}
+          </p>
         </div>
-      </div>
 
-      {activeSession ? (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Play className="h-5 w-5 text-green-500" />
-                  복습 중
-                </span>
-                {nextReminderIn !== null && nextReminderIn > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    다음 알림: {formatTime(nextReminderIn)}
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                총 {activeSession.reminder_count}개의 복습 완료
-              </p>
-              <Button variant="destructive" onClick={stopSession} className="w-full">
-                복습 모드 종료
-              </Button>
-            </CardContent>
-          </Card>
-
-          {currentReminder ? (
-            <Card className="border-primary">
+        {activeSession ? (
+          <div className="space-y-4">
+            <Card className="overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-indigo-500 to-cyan-500" />
               <CardHeader>
-                <CardTitle className="text-primary">
-                  🔔 {currentReminder.subject_name}
+                <CardTitle className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700">
+                    <Play className="h-4 w-4" />
+                    복습 진행 중
+                  </span>
+                  {nextReminderIn !== null && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
+                      <Clock className="h-4 w-4" />
+                      {nextReminderIn > 0
+                        ? `다음 알림 ${formatTime(nextReminderIn)}`
+                        : "알림 생성 중"}
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {currentReminder.content}
+                <div className="rounded-xl border bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground">현재 과목</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {activeSubject?.subject_name ?? "선택된 과목"}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    완료한 복습 알림 {activeSession.reminder_count}회
+                  </p>
                 </div>
                 <Button
-                  onClick={confirmReminder}
+                  variant="destructive"
+                  onClick={stopSession}
                   className="w-full"
-                  disabled={generating}
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  확인 완료
+                  복습 모드 종료
                 </Button>
               </CardContent>
             </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                {generating ? "복습 내용 생성 중..." : "다음 알림을 기다리는 중..."}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>과목 빠른 추가</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input
-                placeholder="과목명 (예: 운영체제)"
-                value={newSubject.name}
-                onChange={(e) =>
-                  setNewSubject({ ...newSubject, name: e.target.value })
-                }
-              />
-              <Textarea
-                placeholder="설명 (선택사항)"
-                value={newSubject.description}
-                onChange={(e) =>
-                  setNewSubject({
-                    ...newSubject,
-                    description: e.target.value,
-                  })
-                }
-                rows={2}
-              />
-              <Button
-                onClick={addSubject}
-                className="w-full"
-                disabled={addingSubject}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {addingSubject ? "추가 중..." : "과목 추가"}
-              </Button>
-            </CardContent>
-          </Card>
 
-          <p className="text-sm text-muted-foreground mb-4">
-            복습할 과목을 선택하세요
-          </p>
-          {subjects.map((subject) => (
-            <Card key={subject.id} className="cursor-pointer hover:border-primary">
-              <CardContent
-                className="py-4"
-                onClick={() => startSession(subject.id)}
-              >
-                <h3 className="font-semibold">{subject.subject_name}</h3>
-                {subject.description && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {subject.description}
+            {currentReminder ? (
+              <Card className="border-primary shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-primary">
+                    🔔 {currentReminder.subject_name} 복습 알림
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="max-h-[360px] overflow-y-auto rounded-xl border bg-muted/30 p-4 whitespace-pre-wrap text-sm leading-relaxed">
+                    {currentReminder.content}
+                  </div>
+                  <Button
+                    onClick={confirmReminder}
+                    className="h-11 w-full"
+                    disabled={generating}
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    확인 완료
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-10 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {generating
+                      ? "AI가 다음 복습 내용을 준비하고 있습니다..."
+                      : "다음 알림이 도착할 때까지 기다려주세요."}
                   </p>
-                )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>과목 빠른 추가</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-2">
+                <Input
+                  placeholder="과목명 (예: 운영체제)"
+                  value={newSubject.name}
+                  onChange={(e) =>
+                    setNewSubject({ ...newSubject, name: e.target.value })
+                  }
+                />
+                <Textarea
+                  placeholder="설명 (선택사항)"
+                  value={newSubject.description}
+                  onChange={(e) =>
+                    setNewSubject({
+                      ...newSubject,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={2}
+                  className="md:col-span-2"
+                />
+                <Button
+                  onClick={addSubject}
+                  className="md:col-span-2"
+                  disabled={addingSubject}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {addingSubject ? "추가 중..." : "과목 추가"}
+                </Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+
+            {subjects.map((subject) => (
+              <Card
+                key={subject.id}
+                className="cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+              >
+                <CardContent
+                  className="space-y-2 py-5"
+                  onClick={() => startSession(subject.id)}
+                >
+                  <div className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-xs text-indigo-700">
+                    학습 시작
+                  </div>
+                  <h3 className="text-base font-semibold">{subject.subject_name}</h3>
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {subject.description || "설명이 없는 과목입니다."}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

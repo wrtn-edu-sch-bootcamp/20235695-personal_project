@@ -6,6 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  BRAND_AUTHORIZED_TEXT,
+  BRAND_OWNER_DISPLAY,
+  BRAND_OWNER_EN,
+} from "@/lib/brand";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,7 +23,7 @@ export function ChatBot() {
     {
       role: "assistant",
       content:
-        "안녕하세요! 재고 관리 도우미 InvenBot입니다. 재고에 대해 궁금한 점을 물어보세요!",
+        `안녕하세요! ${BRAND_OWNER_DISPLAY}의 재고 관리 도우미 InvenBot입니다. ${BRAND_AUTHORIZED_TEXT}. 재고에 대해 궁금한 점을 물어보세요!`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -90,7 +95,7 @@ export function ChatBot() {
             <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Bot className="h-4 w-4" />
-                InvenBot
+                InvenBot · {BRAND_OWNER_EN}
               </CardTitle>
               <Button
                 variant="ghost"

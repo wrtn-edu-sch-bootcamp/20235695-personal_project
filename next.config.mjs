@@ -8,6 +8,14 @@ const pwaConfig = withPWA({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // Windows 환경에서 간헐적으로 webpack pack cache 손상(청크/CSS 404) 방지
+      config.cache = false;
+    }
+    return config;
+  },
+};
 
 export default pwaConfig(nextConfig);
