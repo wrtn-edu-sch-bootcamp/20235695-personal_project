@@ -8,12 +8,35 @@ import { InventorySession } from "@/types/database";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const { data: sessions } = await supabase
-    .from("inventory_sessions")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .returns<InventorySession[]>();
+  let sessions: InventorySession[] | null = null;
+  let envError = false;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("inventory_sessions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .returns<InventorySession[]>();
+    sessions = data;
+  } catch (err) {
+    console.error("HomePage error:", err);
+    envError = true;
+  }
+
+  if (envError) {
+    return (
+      <div className="mx-auto max-w-md px-4 pt-20 text-center">
+        <h1 className="text-xl font-bold text-destructive mb-4">환경변수 설정 오류</h1>
+        <p className="text-sm text-muted-foreground mb-2">
+          NEXT_PUBLIC_SUPABASE_URL 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY가 설정되지 않았습니다.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Vercel Dashboard → Settings → Environment Variables에서 설정 후 Redeploy 해주세요.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-md px-4 pt-6">
