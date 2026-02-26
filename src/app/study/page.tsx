@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { StudentSubject, StudySession, StudyReminder } from "@/types/study";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Clock, CheckCircle2, Play } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  Play,
+  Maximize2,
+  Minimize2,
+  Plus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+
+const REMINDER_INTERVAL_MS = 30 * 60 * 1000;
 
 export default function StudyPage() {
   const [subjects, setSubjects] = useState<StudentSubject[]>([]);
@@ -18,6 +30,10 @@ export default function StudyPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [nextReminderIn, setNextReminderIn] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [addingSubject, setAddingSubject] = useState(false);
+  const [newSubject, setNewSubject] = useState({ name: "", description: "" });
+  const generatingRef = useRef(false);
   const { toast } = useToast();
   const supabase = createClient();
 
@@ -33,14 +49,14 @@ export default function StudyPage() {
       const lastReminder = new Date(activeSession.last_reminder_at!).getTime();
       const now = Date.now();
       const elapsed = now - lastReminder;
-      const remaining = 1 * 60 * 1000 - elapsed; // 1분으로 변경 (테스트용)
+      const remaining = REMINDER_INTERVAL_MS - elapsed;
 
       if (remaining > 0) {
         setNextReminderIn(Math.ceil(remaining / 1000));
       } else {
         setNextReminderIn(0);
         // 타이머 완료 시 자동으로 다음 알림 생성
-        if (!generating && !currentReminder) {
+        if (!generatingRef.current && !currentReminder) {
           generateReminder();
         }
       }
@@ -48,10 +64,50 @@ export default function StudyPage() {
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSession, generating, currentReminder]);
+  }, [activeSession, currentReminder]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!activeSession || currentReminder || generatingRef.current) return;
+
+    const lastReminderTime = activeSession.last_reminder_at
+      ? new Date(activeSession.last_reminder_at).getTime()
+      : 0;
+    const isDue =
+      !lastReminderTime || Date.now() - lastReminderTime >= REMINDER_INTERVAL_MS;
+
+    if (isDue) {
+      generateReminder();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSession?.id, activeSession?.last_reminder_at, currentReminder?.id]);
 
   async function loadData() {
-    const [subjectsRes, sessionRes, reminderRes] = await Promise.all([
+    const [subjectsRes, sessionRes] = await Promise.all([
       supabase
         .from("student_subjects")
         .select("*")
@@ -63,18 +119,28 @@ export default function StudyPage() {
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase
+    ]);
+
+    if (subjectsRes.data) {
+      setSubjects(subjectsRes.data);
+    }
+
+    if (sessionRes.data) {
+      setActiveSession(sessionRes.data);
+      const { data: reminderData } = await supabase
         .from("study_reminders")
         .select("*")
+        .eq("session_id", sessionRes.data.id)
         .is("confirmed_at", null)
         .order("created_at", { ascending: false })
         .limit(1)
-        .maybeSingle(),
-    ]);
+        .maybeSingle();
 
-    if (subjectsRes.data) setSubjects(subjectsRes.data);
-    if (sessionRes.data) setActiveSession(sessionRes.data);
-    if (reminderRes.data) setCurrentReminder(reminderRes.data);
+      setCurrentReminder(reminderData ?? null);
+    } else {
+      setActiveSession(null);
+      setCurrentReminder(null);
+    }
 
     setLoading(false);
   }
@@ -104,7 +170,9 @@ export default function StudyPage() {
 
   async function generateReminder(subjectId?: string) {
     if (!activeSession && !subjectId) return;
+    if (generatingRef.current) return;
 
+    generatingRef.current = true;
     setGenerating(true);
     const targetSubjectId = subjectId || activeSession?.subject_id;
     const subject = subjects.find((s) => s.id === targetSubjectId);
@@ -116,6 +184,7 @@ export default function StudyPage() {
         variant: "destructive",
       });
       setGenerating(false);
+      generatingRef.current = false;
       return;
     }
 
@@ -152,6 +221,7 @@ export default function StudyPage() {
       });
     } finally {
       setGenerating(false);
+      generatingRef.current = false;
     }
   }
 
@@ -180,6 +250,52 @@ export default function StudyPage() {
     setCurrentReminder(null);
     setNextReminderIn(null);
     toast({ title: "종료", description: "복습 모드가 종료되었습니다" });
+  }
+
+  async function toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      toast({
+        title: "오류",
+        description: "전체화면 전환을 지원하지 않는 환경입니다",
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function addSubject() {
+    if (!newSubject.name.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "과목명을 입력하세요",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingSubject(true);
+    const { error } = await supabase.from("student_subjects").insert({
+      subject_name: newSubject.name.trim(),
+      description: newSubject.description.trim() || null,
+    });
+
+    if (error) {
+      toast({
+        title: "오류",
+        description: "과목 추가 실패",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "성공", description: "과목이 추가되었습니다" });
+      setNewSubject({ name: "", description: "" });
+      await loadData();
+    }
+    setAddingSubject(false);
   }
 
   function formatTime(seconds: number) {
@@ -217,7 +333,31 @@ export default function StudyPage() {
 
   return (
     <div className="container mx-auto p-4 pb-24 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">📖 학습 복습 모드</h1>
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">📖 학습 복습 모드</h1>
+        <div className="flex gap-2">
+          <Link href="/study/subjects">
+            <Button variant="outline" size="sm">
+              과목 관리
+            </Button>
+          </Link>
+          {activeSession && (
+            <Button variant="secondary" size="sm" onClick={toggleFullscreen}>
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="mr-2 h-4 w-4" />
+                  전체화면 종료
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="mr-2 h-4 w-4" />
+                  전체화면
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {activeSession ? (
         <div className="space-y-4">
@@ -277,6 +417,40 @@ export default function StudyPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>과목 빠른 추가</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="과목명 (예: 운영체제)"
+                value={newSubject.name}
+                onChange={(e) =>
+                  setNewSubject({ ...newSubject, name: e.target.value })
+                }
+              />
+              <Textarea
+                placeholder="설명 (선택사항)"
+                value={newSubject.description}
+                onChange={(e) =>
+                  setNewSubject({
+                    ...newSubject,
+                    description: e.target.value,
+                  })
+                }
+                rows={2}
+              />
+              <Button
+                onClick={addSubject}
+                className="w-full"
+                disabled={addingSubject}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {addingSubject ? "추가 중..." : "과목 추가"}
+              </Button>
+            </CardContent>
+          </Card>
+
           <p className="text-sm text-muted-foreground mb-4">
             복습할 과목을 선택하세요
           </p>
