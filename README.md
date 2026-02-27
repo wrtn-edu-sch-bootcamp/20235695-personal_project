@@ -164,7 +164,7 @@ NEXT_PUBLIC_N8N_WEBHOOK_URL=your_n8n_webhook_url
 
 ## 배포
 
-- **Vercel**: [items-managment.vercel.app](https://items-managment.vercel.app)
+- **Vercel**: [items-managment.vercel.app](https://items-managment-cgsg.vercel.app/)
 - **GitHub (개인)**: [ingear1999/items-managment](https://github.com/ingear1999/items-managment)
 - **GitHub (학교)**: [wrtn-edu-sch-bootcamp/20235695-personal_project](https://github.com/wrtn-edu-sch-bootcamp/20235695-personal_project)
 
