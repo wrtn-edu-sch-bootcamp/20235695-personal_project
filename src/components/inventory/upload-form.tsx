@@ -17,9 +17,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Upload, FileText, Camera, Loader2, Trash2 } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  Camera,
+  Loader2,
+  Trash2,
+  FileSpreadsheet,
+  File as FileIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { parseCSV } from "@/lib/csv-parser";
+import { parseExcel } from "@/lib/excel-parser";
+import { parsePDF } from "@/lib/pdf-parser";
 import { extractTextFromImage, parseOCRText } from "@/lib/ocr";
 import { NewInventoryItem } from "@/types/database";
 
@@ -42,7 +52,7 @@ export function UploadForm() {
       try {
         const text = await file.text();
         const parsed = parseCSV(text);
-        setItems(parsed);
+        setItems((prev) => [...prev, ...parsed]);
         toast.success(`${parsed.length}개 품목을 불러왔습니다`);
       } catch (err) {
         toast.error(
@@ -50,6 +60,60 @@ export function UploadForm() {
         );
       } finally {
         setIsLoading(false);
+        e.target.value = "";
+      }
+    },
+    []
+  );
+
+  const handleExcelUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsLoading(true);
+      try {
+        const parsed = await parseExcel(file);
+        setItems((prev) => [...prev, ...parsed]);
+        toast.success(`${parsed.length}개 품목을 불러왔습니다`);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Excel 파싱에 실패했습니다"
+        );
+      } finally {
+        setIsLoading(false);
+        e.target.value = "";
+      }
+    },
+    []
+  );
+
+  const handlePDFUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsLoading(true);
+      try {
+        toast.info("PDF 텍스트 추출 중...");
+        const parsed = await parsePDF(file);
+
+        if (parsed.length === 0) {
+          toast.warning(
+            "PDF에서 품목을 인식하지 못했습니다. 바코드(8~13자리), 상품명, 수량 형식을 확인해주세요."
+          );
+          return;
+        }
+
+        setItems((prev) => [...prev, ...parsed]);
+        toast.success(`${parsed.length}개 품목을 인식했습니다`);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "PDF 파싱에 실패했습니다"
+        );
+      } finally {
+        setIsLoading(false);
+        e.target.value = "";
       }
     },
     []
@@ -57,30 +121,40 @@ export function UploadForm() {
 
   const handleImageUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
 
       setIsLoading(true);
       try {
-        toast.info("OCR 처리 중... 잠시 기다려주세요");
-        const text = await extractTextFromImage(file);
-        const parsed = parseOCRText(text);
+        let totalParsed = 0;
 
-        if (parsed.length === 0) {
-          toast.warning(
-            "인식된 품목이 없습니다. 이미지를 다시 확인하거나 CSV 업로드를 이용해주세요."
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          toast.info(
+            `OCR 처리 중... (${i + 1}/${files.length}) ${file.name}`
           );
-          return;
+          const text = await extractTextFromImage(file);
+          const parsed = parseOCRText(text);
+          if (parsed.length > 0) {
+            setItems((prev) => [...prev, ...parsed]);
+            totalParsed += parsed.length;
+          }
         }
 
-        setItems(parsed);
-        toast.success(`${parsed.length}개 품목을 인식했습니다`);
+        if (totalParsed === 0) {
+          toast.warning(
+            "인식된 품목이 없습니다. 이미지를 다시 확인하거나 다른 업로드 방식을 이용해주세요."
+          );
+        } else {
+          toast.success(`총 ${totalParsed}개 품목을 인식했습니다`);
+        }
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "OCR 처리에 실패했습니다"
         );
       } finally {
         setIsLoading(false);
+        e.target.value = "";
       }
     },
     []
@@ -155,14 +229,26 @@ export function UploadForm() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="csv">
-            <FileText className="mr-2 h-4 w-4" />
-            CSV 파일
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="csv" className="text-xs sm:text-sm">
+            <FileText className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">CSV</span>
+            <span className="sm:hidden">CSV</span>
           </TabsTrigger>
-          <TabsTrigger value="ocr">
-            <Camera className="mr-2 h-4 w-4" />
-            사진 (OCR)
+          <TabsTrigger value="excel" className="text-xs sm:text-sm">
+            <FileSpreadsheet className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Excel</span>
+            <span className="sm:hidden">Excel</span>
+          </TabsTrigger>
+          <TabsTrigger value="pdf" className="text-xs sm:text-sm">
+            <FileIcon className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </TabsTrigger>
+          <TabsTrigger value="ocr" className="text-xs sm:text-sm">
+            <Camera className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">사진</span>
+            <span className="sm:hidden">사진</span>
           </TabsTrigger>
         </TabsList>
 
@@ -196,6 +282,66 @@ export function UploadForm() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="excel">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Excel 파일 업로드</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Label
+                htmlFor="excel-file"
+                className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors hover:border-primary/50 hover:bg-muted/50"
+              >
+                <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Excel 파일을 선택하세요 (.xlsx, .xls)
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  바코드, 상품명, 수량 컬럼 필요
+                </span>
+                <Input
+                  id="excel-file"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={handleExcelUpload}
+                  disabled={isLoading}
+                />
+              </Label>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pdf">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">PDF 파일 업로드</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Label
+                htmlFor="pdf-file"
+                className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors hover:border-primary/50 hover:bg-muted/50"
+              >
+                <FileIcon className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  PDF 파일을 선택하세요
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  바코드, 상품명, 수량이 포함된 검수표 PDF
+                </span>
+                <Input
+                  id="pdf-file"
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={handlePDFUpload}
+                  disabled={isLoading}
+                />
+              </Label>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="ocr">
           <Card>
             <CardHeader>
@@ -208,7 +354,7 @@ export function UploadForm() {
               >
                 <Camera className="h-8 w-8 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  검수표 사진을 선택하세요
+                  검수표 사진을 선택하세요 (여러 장 가능)
                 </span>
                 <span className="text-xs text-muted-foreground">
                   바코드, 상품명, 수량이 포함된 검수표
@@ -218,6 +364,7 @@ export function UploadForm() {
                   type="file"
                   accept="image/*"
                   capture="environment"
+                  multiple
                   className="hidden"
                   onChange={handleImageUpload}
                   disabled={isLoading}
