@@ -71,7 +71,7 @@ async function fetchSessionContext(sessionId: string): Promise<string> {
     const actualQty =
       item.actual_quantity !== null ? `${item.actual_quantity}개` : "-";
     lines.push(
-      `- ${item.product_name} (바코드: ${item.barcode}) | 재고서: ${item.expected_quantity}개 | 실물: ${actualQty} | 상태: ${statusLabel}`
+      `- ${item.product_name} (바코드: ${item.barcode}) | 검수표: ${item.expected_quantity}개 | 실물: ${actualQty} | 상태: ${statusLabel}`
     );
   }
 

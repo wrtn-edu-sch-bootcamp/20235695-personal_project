@@ -35,7 +35,7 @@ export default async function SessionsPage() {
           </div>
           <h2 className="mb-2 text-lg font-semibold">세션이 없습니다</h2>
           <p className="text-sm text-muted-foreground">
-            재고서를 업로드하면 세션이 생성됩니다
+            검수표를 업로드하면 세션이 생성됩니다
           </p>
         </div>
       )}

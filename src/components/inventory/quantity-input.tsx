@@ -46,7 +46,7 @@ export function QuantityInput({ item, onSubmit, onCancel }: QuantityInputProps) 
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between rounded-md bg-muted p-3">
-          <span className="text-sm text-muted-foreground">재고서 수량</span>
+          <span className="text-sm text-muted-foreground">검수표 수량</span>
           <span className="text-lg font-bold">{item.expected_quantity}</span>
         </div>
 

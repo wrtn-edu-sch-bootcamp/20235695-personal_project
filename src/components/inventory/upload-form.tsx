@@ -199,7 +199,7 @@ export function UploadForm() {
         <TabsContent value="ocr">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">재고서 사진 업로드</CardTitle>
+              <CardTitle className="text-sm">검수표 사진 업로드</CardTitle>
             </CardHeader>
             <CardContent>
               <Label
@@ -208,10 +208,10 @@ export function UploadForm() {
               >
                 <Camera className="h-8 w-8 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  재고서 사진을 선택하세요
+                  검수표 사진을 선택하세요
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  바코드, 상품명, 수량이 포함된 재고서
+                  바코드, 상품명, 수량이 포함된 검수표
                 </span>
                 <Input
                   id="ocr-file"

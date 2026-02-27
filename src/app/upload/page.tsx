@@ -15,9 +15,9 @@ export default function UploadPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-bold">재고서 업로드</h1>
+          <h1 className="text-xl font-bold">검수표 업로드</h1>
           <p className="text-sm text-muted-foreground">
-            CSV 파일 또는 사진으로 재고서를 등록하세요
+            CSV 파일 또는 사진으로 검수표를 등록하세요
           </p>
         </div>
       </header>

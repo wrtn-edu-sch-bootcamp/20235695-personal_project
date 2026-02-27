@@ -32,7 +32,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.item.json;\nconst diff = item.actual_quantity - item.expected_quantity;\nconst emoji = diff > 0 ? '📈' : '📉';\n\nconst message = `${emoji} **재고 불일치 발견!**\\n\\n` +\n  `상품: ${item.product_name}\\n` +\n  `바코드: ${item.barcode}\\n` +\n  `재고서: ${item.expected_quantity}개\\n` +\n  `실물: ${item.actual_quantity}개\\n` +\n  `차이: ${diff > 0 ? '+' : ''}${diff}개\\n\\n` +\n  `세션: ${item.session_name}`;\n\nreturn { message };"
+        "jsCode": "const item = $input.item.json;\nconst diff = item.actual_quantity - item.expected_quantity;\nconst emoji = diff > 0 ? '📈' : '📉';\n\nconst message = `${emoji} **재고 불일치 발견!**\\n\\n` +\n  `상품: ${item.product_name}\\n` +\n  `바코드: ${item.barcode}\\n` +\n  `검수표: ${item.expected_quantity}개\\n` +\n  `실물: ${item.actual_quantity}개\\n` +\n  `차이: ${diff > 0 ? '+' : ''}${diff}개\\n\\n` +\n  `세션: ${item.session_name}`;\n\nreturn { message };"
       },
       "name": "알림 메시지 생성",
       "type": "n8n-nodes-base.code",

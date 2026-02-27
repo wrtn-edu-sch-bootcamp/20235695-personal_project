@@ -67,7 +67,7 @@ export default async function HomePage() {
           </div>
           <h2 className="mb-2 text-lg font-semibold">아직 재고 확인이 없어요</h2>
           <p className="mb-6 text-sm text-muted-foreground">
-            재고서를 업로드하고 바코드 스캔으로
+            검수표를 업로드하고 바코드 스캔으로
             <br />
             빠르게 재고를 확인해보세요
           </p>

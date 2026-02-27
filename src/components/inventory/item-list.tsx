@@ -30,7 +30,7 @@ export function ItemList({ items }: ItemListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>상품명</TableHead>
-            <TableHead className="w-[70px] text-right">재고서</TableHead>
+            <TableHead className="w-[70px] text-right">검수표</TableHead>
             <TableHead className="w-[70px] text-right">실물</TableHead>
             <TableHead className="w-[80px] text-center">상태</TableHead>
           </TableRow>

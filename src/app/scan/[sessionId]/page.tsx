@@ -70,7 +70,7 @@ export default function ScanPage() {
         if (checked && checked.length > 0) {
           toast.info("이미 확인 완료된 상품입니다");
         } else {
-          toast.warning("재고서에 없는 바코드입니다");
+          toast.warning("검수표에 없는 바코드입니다");
         }
         return;
       }
